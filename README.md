@@ -1,127 +1,61 @@
 <p align="center">
-  <img src="logo.svg" width="200" alt="PokeBall OpenClaw Logo"/>
+  <img src="assets/pokeball-logo.svg" alt="PokeBall OpenClaw" width="120" />
 </p>
 
 <h1 align="center">PokeBall OpenClaw</h1>
 
 <p align="center">
-  A 3D-printed PokeBall housing a Raspberry Pi 5 running <a href="https://github.com/openclaw/openclaw">OpenClaw</a> — an open-source AI agent you talk to through Telegram.<br/>
-  The center button glows based on what the agent is doing.
+  <strong>Your AI agent, captured.</strong><br>
+  A living PokeBall that thinks, glows, and talks back.
 </p>
 
 <p align="center">
-  <b>Your AI agent, captured.</b>
-</p>
-
-<p align="center">
-  Built by <a href="https://x.com/Building_Josh">Building Josh</a> · MIT License
+  <a href="#installation">Install</a> · <a href="#what-it-does">What It Does</a> · <a href="#why">Why</a> · <a href="#demo">Demo</a>
 </p>
 
 ---
 
 ## What It Does
 
-You send a message to a Telegram bot. Inside the PokeBall on your desk, a Raspberry Pi running OpenClaw processes your request — calling LLMs, running tools, searching the web — and sends back a response. The whole time, the PokeBall's center button tells you what's happening:
+PokeBall OpenClaw is a 3D-printed PokeBall with a Raspberry Pi 5 inside, running [OpenClaw](https://openclaw.ai) — the open-source AI agent. You talk to it through Telegram. It thinks using Claude, GPT, or whatever LLM you point it at. And while it works, the center button glows to tell you what's happening.
 
-| State | Color | What's Happening |
-|-------|-------|-----------------|
-| Idle | Green pulse (breathing) | Waiting for a message |
-| Thinking | Solid blue | Agent is processing your request |
-| Tool call | Fast blue blink | Agent is running a tool (web search, file ops, etc.) |
-| Success | Green flash | Response sent back to Telegram |
-| Error | Red blink | Something went wrong |
-| Disconnected | Slow red pulse | Gateway is down or unreachable |
-| Boot | RGB cycle | Starting up |
+Blue means it's thinking. Green means it answered. Red means something broke. When nobody's talking to it, it breathes — a slow green pulse, like it's sleeping inside the ball, waiting.
 
-## How It Works
+It's not a toy. It's a fully functional AI assistant that happens to live inside the most iconic capture device in fiction.
 
-Two programs run on the Pi, connected via HTTP on localhost:
+### Features
 
-```
-[Your Phone]                    [PokeBall]
-     │                               │
-  Telegram ──► OpenClaw Gateway ──► pokeball-led plugin
-                                         │
-                                    HTTP POST
-                                         │
-                                    LED Daemon (Python)
-                                         │
-                                    GPIO ──► LEDs
-```
+- **LED state engine** — A stack-aware state machine drives three LEDs through the PokeBall's translucent button. Seven distinct states: boot, idle, thinking, tool call, success, error, disconnected. The transitions are instantaneous — you see the ball react the moment you hit send.
+- **Heartbeat watchdog** — The OpenClaw plugin pings the LED daemon every 5 seconds. If the gateway crashes, the ball knows. Slow red pulse. No false positives, no polling logs, no fragile workarounds.
+- **Fire-and-forget architecture** — The LED system never interferes with the agent. Every call from the plugin to the daemon is wrapped in try/catch. If the LEDs die, the agent keeps working. Nice-to-have, not a dependency.
+- **Telegram-native** — Designed for Telegram via OpenClaw's built-in channel. Message the bot, watch the ball, get your answer. No app, no dashboard, no browser tab.
+- **Fully reproducible** — Five STL files, three LEDs, three resistors, one Pi. Every file you need is in this repo. Print it, wire it, run one script, you're live.
+- **Always on** — systemd service starts the LED daemon on boot. Power cycle the Pi and everything comes back automatically. Hackathon-grade reliability.
 
-1. **OpenClaw plugin** hooks into agent lifecycle events (`before_agent_start`, `agent_end`, `before_tool_call`, `after_tool_call`) and sends state changes to the LED daemon
-2. **LED daemon** (Python/FastAPI) receives state commands and drives three LEDs via GPIO through a stack-aware state machine
-3. A **heartbeat** every 5 seconds lets the LEDs detect if the gateway crashes
+## Installation
 
-Full architecture details: [docs/architecture.md](docs/architecture.md)
+### Prerequisites
 
-## Parts List
+- [OpenClaw](https://github.com/openclaw/openclaw) installed and configured
+- Telegram bot set up in OpenClaw (create one via [@BotFather](https://t.me/BotFather))
+- Raspberry Pi 5 (8GB recommended) or Pi 4 (4GB minimum)
+- 3D-printed PokeBall shell ([STL files included](stl/))
 
-| Part | Cost |
-|------|------|
-| Raspberry Pi 5 (8GB) | ~$80 |
-| USB-C power supply (official) | ~$12 |
-| MicroSD card (32GB+) | ~$10 |
-| 3x LEDs (red, green, blue) | ~$0.30 |
-| 3x 330 ohm resistors | ~$0.10 |
-| Jumper wires | ~$0.50 |
-| PLA filament (~85g) | ~$2 |
-| **Total** | **~$105** |
+### Quick Install
 
-Full parts list with links: [hardware/parts-list.md](hardware/parts-list.md)
-
-## Quick Start
-
-### 1. Print the PokeBall
-
-Print the five STL files in the [`stl/`](stl/) directory:
-
-| File | Color |
-|------|-------|
-| `top-half.stl` | Red |
-| `bottom-half.stl` | White |
-| `center-band.stl` | Black |
-| `button.stl` | White or translucent |
-| `button-bezel.stl` | Dark gray / black |
-
-Print settings: 0.2mm layer height, 15% infill, PLA. See [stl/README.md](stl/README.md) for details.
-
-### 2. Wire the LEDs
-
-Three LEDs, three resistors, one ground wire. That's it.
-
-```
-GPIO 17 (Pin 11) ──► 330Ω ──► Blue LED  ──► GND (Pin 9)
-GPIO 27 (Pin 13) ──► 330Ω ──► Green LED ──► GND (Pin 9)
-GPIO 22 (Pin 15) ──► 330Ω ──► Red LED   ──► GND (Pin 9)
-```
-
-Full wiring guide: [hardware/wiring-guide.md](hardware/wiring-guide.md)
-
-### 3. Assemble
-
-Mount the Pi in the bottom half, position LEDs behind the button, route the USB-C cable out the back, close it up.
-
-Full assembly guide: [hardware/assembly-guide.md](hardware/assembly-guide.md)
-
-### 4. Install Software
-
-Flash Raspberry Pi OS (64-bit Lite) to your SD card, then:
-
+1. Clone this repo onto your Pi:
 ```bash
-git clone https://github.com/YOUR_USERNAME/pokeball-openclaw.git
-cd pokeball-openclaw
+git clone https://github.com/buildingjoshbetter/Pokemon_Ball.git
+cd Pokemon_Ball
+```
+
+2. Run the setup script:
+```bash
 chmod +x scripts/setup-pi.sh
 ./scripts/setup-pi.sh
 ```
 
-This installs Node.js 22, OpenClaw, the LED daemon, and the plugin.
-
-### 5. Configure Telegram
-
-1. Message [@BotFather](https://t.me/BotFather) on Telegram → `/newbot` → copy the token
-2. Edit `~/.openclaw/openclaw.json`:
-
+3. Add your Telegram bot token to `~/.openclaw/openclaw.json`:
 ```json5
 {
   channels: {
@@ -138,42 +72,121 @@ This installs Node.js 22, OpenClaw, the LED daemon, and the plugin.
 }
 ```
 
-3. Restart the gateway: `openclaw gateway restart`
-4. Message your bot on Telegram and approve the pairing code
+4. Restart OpenClaw:
+```bash
+openclaw gateway restart
+```
 
-### 6. Test
+5. Message your bot on Telegram. Watch the ball glow. That's it.
+
+### Hardware Setup
+
+Three LEDs, three resistors, one ground wire:
+
+```
+GPIO 17 (Pin 11) ──► 330Ω ──► Blue LED  ──► GND (Pin 9)
+GPIO 27 (Pin 13) ──► 330Ω ──► Green LED ──► GND (Pin 9)
+GPIO 22 (Pin 15) ──► 330Ω ──► Red LED   ──► GND (Pin 9)
+```
+
+Position all three behind the center button. The translucent plastic acts as a diffuser.
+
+Full guides: [Wiring](hardware/wiring-guide.md) · [Assembly](hardware/assembly-guide.md) · [Parts List](hardware/parts-list.md) · [3D Printing](stl/README.md)
+
+## Demo
+
+Send a message. Watch the ball.
+
+```
+You: What's the weather in Austin today?
+
+[PokeBall: 🟢 green pulse → 🔵 solid blue]
+
+Agent: Currently 72°F and sunny in Austin, TX. High of 78°F expected
+       this afternoon with clear skies through the evening.
+
+[PokeBall: 🔵 blue → 🟢 green flash → 🟢 green pulse]
+```
+
+Ask something that requires tools — the ball blinks faster:
+
+```
+You: Search the web for the latest OpenClaw release notes
+
+[PokeBall: 🟢 → 🔵 solid blue → 🔵 fast blink (tool call)]
+
+Agent: OpenClaw 2026.2.12 was released today with patches for 40+
+       security vulnerabilities. Key changes include...
+
+[PokeBall: 🔵 fast blink → 🔵 solid → 🟢 flash → 🟢 pulse]
+```
+
+If something goes wrong, you know immediately:
+
+```
+You: Connect to my database and run the migration
+
+[PokeBall: 🟢 → 🔵 solid → 🔴 fast blink]
+
+Agent: Connection refused on port 5432. Is PostgreSQL running?
+
+[PokeBall: 🔴 blink for 3s → 🟢 pulse]
+```
+
+Kill the OpenClaw gateway and the ball tells you:
+
+```
+$ openclaw gateway stop
+
+[PokeBall: ... 15 seconds pass ... 🔴 slow pulse (breathing)]
+[The ball knows. It's waiting for its trainer to come back.]
+
+$ openclaw gateway start
+
+[PokeBall: 🔴 slow pulse → 🟢 pulse]
+[Back online. Ready.]
+```
+
+Run the full demo without Telegram:
 
 ```bash
-# Test LED wiring
-python3 /opt/pokeball-openclaw/led-controller/test_leds.py
-
-# Test all states via API
-bash scripts/test-leds.sh
-
-# Run the full demo sequence
 bash scripts/demo-sequence.sh
 ```
 
-Send a message to your Telegram bot and watch the PokeBall glow.
+## Why
 
-## Project Structure
+I was sitting at a hackathon staring at a terminal. Everyone around me had the same thing — a laptop, a code editor, an agent running in a window somewhere. You couldn't tell who was running what. You couldn't tell if anything was happening. The AI was invisible.
 
-```
-pokeball-openclaw/
-├── stl/                    # 3D printable files + print guide
-├── hardware/               # Wiring diagram, parts list, assembly guide
-├── led-controller/         # Python LED daemon (runs on Pi)
-├── openclaw-plugin/        # TypeScript plugin for OpenClaw
-├── scripts/                # Setup and test scripts
-└── docs/                   # Architecture + troubleshooting
-```
+And I thought: that's the problem with agents. Not just at hackathons — everywhere. You fire off a request and then you sit there. Is it thinking? Did it crash? Is it stuck in a loop? You check the terminal. You check the logs. You wait. The most powerful technology we've ever built, and it has the presence of a loading spinner.
 
-## Troubleshooting
+I had a 3D printer. I had a Raspberry Pi. I had a PokeBall model I'd been meaning to print for two years. And I had OpenClaw, an open-source agent that runs on a Pi and talks through Telegram.
 
-See [docs/troubleshooting.md](docs/troubleshooting.md) for common issues.
+So I caught one.
+
+Three LEDs behind the button. A Python daemon listening on localhost. An OpenClaw plugin that fires on every lifecycle event. When the agent thinks, the ball glows blue. When it finishes, green flash. When it fails, red. When nobody's talking to it, it breathes — slow green pulse, like something alive is sleeping inside.
+
+The moment I put it on the table, people walked over. Not because the code was impressive — it's straightforward. They walked over because they could *see* the AI. For the first time, the invisible thing had a body. It sat on the desk and it glowed and it breathed and when you talked to it, it reacted. That changes how you think about it. That changes how everyone around you thinks about it.
+
+$105 in parts. An afternoon of work. Every file you need is in this repo.
+
+Your move.
+
+## Built By
+
+**[@Building_Josh](https://x.com/Building_Josh)**
+
+Built at a hackathon because AI agents deserve a body, and every trainer deserves a PokeBall on their desk.
 
 ## License
 
-MIT License. See [LICENSE](LICENSE).
+[MIT](LICENSE) — Gotta catch 'em all. Or at least this one.
 
-Do whatever you want with this. Build one, modify it, make it better. If you do, tag [@Building_Josh](https://x.com/Building_Josh) — I'd love to see it.
+---
+
+<p align="center">
+  <em>"I caught an AI."</em>
+</p>
+
+<p align="center">
+  <img src="assets/pokeball-logo.svg" alt="PokeBall OpenClaw" width="40" />
+</p>
