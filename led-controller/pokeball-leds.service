@@ -1,0 +1,15 @@
+[Unit]
+Description=PokeBall LED Controller Daemon
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/opt/pokeball-openclaw/led-controller
+ExecStart=/opt/pokeball-openclaw/led-controller/venv/bin/uvicorn led_daemon:app --host 127.0.0.1 --port 8420
+Restart=always
+RestartSec=3
+Environment=GPIOZERO_PIN_FACTORY=lgpio
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,18 @@
+{
+  "name": "@building-josh/pokeball-led",
+  "version": "1.0.0",
+  "description": "OpenClaw plugin that drives PokeBall LEDs based on agent lifecycle events",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "keywords": ["openclaw", "plugin", "led", "raspberry-pi", "pokeball"],
+  "author": "Building Josh",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.4.0"
+  }
+}
